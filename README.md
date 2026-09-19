@@ -491,3 +491,8 @@ Riceberry:Notify("Riceberry", "UI Loaded!", 3)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # 🍓 END คู่มือการใช้งานนี้ถูกสร้างโดยAI อาจจะไม่ตรง 100% ต้องไปดึงจากhttps://raw.githubusercontent.com/kkso8882kkkso9882-prog/Riceberry-UI/refs/heads/main/LibraryUI.lua มันจะตรงแน่นอน 100%  
+ถ้าเกิดใช้ AI ให้ใช้คำสั่งนี้ 
+```Lua
+ถ้าเกิดมีการให้สร้าง ui ให้สร้างแต่ถ้าเกิดมีการบอกว่าให้ใช้ uiให้ไปดึงจากhttps://github.com/kkso8882kkkso9882-prog/Riceberry-UI/tree/main มีทั้งคู่มือและ ui จริงๆคู่มือhttps://raw.githubusercontent.com/kkso8882kkkso9882-prog/Riceberry-UI/refs/heads/main/README.md
+Uiตัวจริงhttps://raw.githubusercontent.com/kkso8882kkkso9882-prog/Riceberry-UI/refs/heads/main/LibraryUI.luaแนะนำให้เช็คทั้ง 2 ตัวอย่าเดามั่วนะ เพราะว่าerror
+```
