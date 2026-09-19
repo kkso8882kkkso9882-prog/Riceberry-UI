@@ -531,6 +531,9 @@ function Riceberry:CreateWindow(Config)
 	Tween(Main, { Size = NormalSize }, 0.25, Enum.EasingStyle.Quart)
 
 	local Window = {}
+	Window.Content = Content
+	Window.Main = Main
+	Window.Gui = Gui
 
 	function Window:CreateButton(Config)
 		Config = Config or {}
@@ -1120,9 +1123,21 @@ Riceberry.CreateWindow = function(self, Config)
         }, list)
 
         local function refreshSize()
-            local h = math.min(#values * 34 + 6, 170)
+            local h = math.min(math.max(#values, 1) * 34 + 6, 170)
             list.CanvasSize = UDim2.fromOffset(0, #values * 34 + 6)
             return h
+        end
+
+        local function closeList()
+            opened = false
+            arrow.Text = "⌄"
+            Tween(list, {Size = UDim2.new(1, 0, 0, 0)}, 0.14)
+            task.delay(0.15, function()
+                if not opened then
+                    list.Visible = false
+                    holder.Size = UDim2.new(1, 0, 0, 42)
+                end
+            end)
         end
 
         local function set(value)
@@ -1131,39 +1146,45 @@ Riceberry.CreateWindow = function(self, Config)
             RB_SafeCallback(Config.Callback, value)
         end
 
-        for _, option in ipairs(values) do
-            local optionButton = New("TextButton", {
-                Size = UDim2.new(1, -8, 0, 30),
-                Position = UDim2.fromOffset(4, 0),
-                BackgroundColor3 = Color3.fromRGB(42, 42, 50),
-                BorderSizePixel = 0,
-                Text = tostring(option),
-                TextColor3 = RB_Defaults.Text,
-                TextSize = 12,
-                Font = Enum.Font.Gotham,
-                AutoButtonColor = false,
-                ZIndex = 51
-            }, list)
+        local function rebuildOptions()
+            for _, child in ipairs(list:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child:Destroy()
+                end
+            end
 
-            Corner(optionButton, 6)
+            for _, option in ipairs(values) do
+                local optionButton = New("TextButton", {
+                    Size = UDim2.new(1, -8, 0, 30),
+                    Position = UDim2.fromOffset(4, 0),
+                    BackgroundColor3 = Color3.fromRGB(42, 42, 50),
+                    BorderSizePixel = 0,
+                    Text = tostring(option),
+                    TextColor3 = RB_Defaults.Text,
+                    TextSize = 12,
+                    Font = Enum.Font.Gotham,
+                    AutoButtonColor = false,
+                    ZIndex = 51
+                }, list)
 
-            optionButton.MouseEnter:Connect(function()
-                Tween(optionButton, {BackgroundColor3 = Color3.fromRGB(55, 55, 64)}, 0.1)
-            end)
+                Corner(optionButton, 6)
 
-            optionButton.MouseLeave:Connect(function()
-                Tween(optionButton, {BackgroundColor3 = Color3.fromRGB(42, 42, 50)}, 0.1)
-            end)
+                optionButton.MouseEnter:Connect(function()
+                    Tween(optionButton, {BackgroundColor3 = Color3.fromRGB(55, 55, 64)}, 0.1)
+                end)
 
-            optionButton.MouseButton1Click:Connect(function()
-                set(option)
-                opened = false
-                list.Visible = false
-                arrow.Text = "⌄"
-                Tween(list, {Size = UDim2.new(1, 0, 0, 0)}, 0.14)
-                holder.Size = UDim2.new(1, 0, 0, 42)
-            end)
+                optionButton.MouseLeave:Connect(function()
+                    Tween(optionButton, {BackgroundColor3 = Color3.fromRGB(42, 42, 50)}, 0.1)
+                end)
+
+                optionButton.MouseButton1Click:Connect(function()
+                    set(option)
+                    closeList()
+                end)
+            end
         end
+
+        rebuildOptions()
 
         button.MouseButton1Click:Connect(function()
             opened = not opened
@@ -1175,14 +1196,7 @@ Riceberry.CreateWindow = function(self, Config)
                 holder.Size = UDim2.new(1, 0, 0, 42 + h + 3)
                 Tween(list, {Size = UDim2.new(1, 0, 0, h)}, 0.18, Enum.EasingStyle.Back)
             else
-                arrow.Text = "⌄"
-                Tween(list, {Size = UDim2.new(1, 0, 0, 0)}, 0.14)
-                task.delay(0.15, function()
-                    if not opened then
-                        list.Visible = false
-                        holder.Size = UDim2.new(1, 0, 0, 42)
-                    end
-                end)
+                closeList()
             end
         end)
 
@@ -1203,6 +1217,25 @@ Riceberry.CreateWindow = function(self, Config)
             end,
             Refresh = function(_, newValues)
                 values = newValues or {}
+                if selected ~= nil then
+                    local stillValid = false
+                    for _, option in ipairs(values) do
+                        if option == selected then
+                            stillValid = true
+                            break
+                        end
+                    end
+                    if not stillValid then
+                        selected = values[1]
+                        valueLabel.Text = tostring(selected or "Select")
+                    end
+                end
+                rebuildOptions()
+                if opened then
+                    local h = refreshSize()
+                    holder.Size = UDim2.new(1, 0, 0, 42 + h + 3)
+                    list.Size = UDim2.new(1, 0, 0, h)
+                end
             end
         }
     end
@@ -1212,7 +1245,11 @@ Riceberry.CreateWindow = function(self, Config)
 
         local min = tonumber(Config.Min) or 0
         local max = tonumber(Config.Max) or 100
+        if max < min then
+            max = min
+        end
         local value = math.clamp(tonumber(Config.Default) or min, min, max)
+        local range = math.max(max - min, 1e-9)
 
         local frame = New("Frame", {
             Size = UDim2.new(1, 0, 0, 58),
@@ -1240,19 +1277,31 @@ Riceberry.CreateWindow = function(self, Config)
             TextXAlignment = Enum.TextXAlignment.Right
         }, frame)
 
+        -- Wider invisible hit area so the thin bar is easy to grab
+        local hit = New("TextButton", {
+            Size = UDim2.new(1, 0, 0, 24),
+            Position = UDim2.fromOffset(0, 26),
+            BackgroundTransparency = 1,
+            Text = "",
+            AutoButtonColor = false,
+            ZIndex = 3
+        }, frame)
+
         local bar = New("Frame", {
             Size = UDim2.new(1, 0, 0, 6),
-            Position = UDim2.fromOffset(0, 35),
+            Position = UDim2.fromOffset(0, 9),
             BackgroundColor3 = Color3.fromRGB(55, 55, 63),
-            BorderSizePixel = 0
-        }, frame)
+            BorderSizePixel = 0,
+            ZIndex = 2
+        }, hit)
 
         Corner(bar, 10)
 
         local fill = New("Frame", {
-            Size = UDim2.new((value - min) / math.max(max - min, 1), 0, 1, 0),
+            Size = UDim2.new((value - min) / range, 0, 1, 0),
             BackgroundColor3 = Accent,
-            BorderSizePixel = 0
+            BorderSizePixel = 0,
+            ZIndex = 2
         }, bar)
 
         Corner(fill, 10)
@@ -1260,61 +1309,90 @@ Riceberry.CreateWindow = function(self, Config)
         local knob = New("Frame", {
             Size = UDim2.fromOffset(16, 16),
             AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.new((value - min) / math.max(max - min, 1), 0, 0.5, 0),
+            Position = UDim2.new((value - min) / range, 0, 0.5, 0),
             BackgroundColor3 = Color3.fromRGB(250, 250, 250),
-            BorderSizePixel = 0
+            BorderSizePixel = 0,
+            ZIndex = 4
         }, bar)
 
         Corner(knob, 20)
 
         local dragging = false
 
-        local function setFromX(x, fire)
-            local pct = math.clamp(
-                (x - bar.AbsolutePosition.X) / math.max(bar.AbsoluteSize.X, 1),
-                0, 1
-            )
+        local function applyVisual(p, animate)
+            valueLabel.Text = tostring(value)
+            local size = UDim2.new(p, 0, 1, 0)
+            local pos = UDim2.new(p, 0, 0.5, 0)
+            if animate then
+                Tween(fill, {Size = size}, 0.1)
+                Tween(knob, {Position = pos}, 0.1, Enum.EasingStyle.Quad)
+            else
+                fill.Size = size
+                knob.Position = pos
+            end
+        end
 
-            value = min + (max - min) * pct
+        local function setFromX(x, fire, animate)
+            local absPos = bar.AbsolutePosition
+            local absSize = bar.AbsoluteSize
+            local pct = 0
+            if absSize.X > 0 then
+                pct = math.clamp((x - absPos.X) / absSize.X, 0, 1)
+            end
+
+            value = min + range * pct
 
             if Config.Rounding then
-                local power = 10 ^ tonumber(Config.Rounding)
+                local power = 10 ^ (tonumber(Config.Rounding) or 0)
                 value = math.round(value * power) / power
             else
                 value = math.round(value)
             end
+            value = math.clamp(value, min, max)
 
-            local p = (value - min) / math.max(max - min, 1)
-            valueLabel.Text = tostring(value)
-            Tween(fill, {Size = UDim2.new(p, 0, 1, 0)}, 0.08)
-            Tween(knob, {Position = UDim2.new(p, 0, 0.5, 0)}, 0.08, Enum.EasingStyle.Quad)
+            local p = (value - min) / range
+            applyVisual(p, animate == true)
 
             if fire ~= false then
                 RB_SafeCallback(Config.Callback, value)
             end
         end
 
-        bar.InputBegan:Connect(function(input)
+        local function beginDrag(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
-                setFromX(input.Position.X)
+                setFromX(input.Position.X, true, false)
+            end
+        end
+
+        hit.InputBegan:Connect(beginDrag)
+        bar.InputBegan:Connect(beginDrag)
+        knob.InputBegan:Connect(beginDrag)
+
+        local changedConn = UserInputService.InputChanged:Connect(function(input)
+            if not dragging then
+                return
+            end
+            if input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch then
+                setFromX(input.Position.X, true, false)
             end
         end)
 
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and (
-                input.UserInputType == Enum.UserInputType.MouseMovement
-                or input.UserInputType == Enum.UserInputType.Touch
-            ) then
-                setFromX(input.Position.X)
-            end
-        end)
-
-        UserInputService.InputEnded:Connect(function(input)
+        local endedConn = UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
                 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
+            end
+        end)
+
+        frame.Destroying:Connect(function()
+            if changedConn then
+                changedConn:Disconnect()
+            end
+            if endedConn then
+                endedConn:Disconnect()
             end
         end)
 
@@ -1323,10 +1401,9 @@ Riceberry.CreateWindow = function(self, Config)
         return {
             Set = function(_, newValue)
                 value = math.clamp(tonumber(newValue) or min, min, max)
-                setFromX(
-                    bar.AbsolutePosition.X +
-                    ((value - min) / math.max(max - min, 1)) * bar.AbsoluteSize.X
-                )
+                local p = (value - min) / range
+                applyVisual(p, true)
+                RB_SafeCallback(Config.Callback, value)
             end,
             Get = function()
                 return value
@@ -1382,9 +1459,15 @@ Riceberry.CreateWindow = function(self, Config)
             updateText()
         end)
 
-        UserInputService.InputBegan:Connect(function(input, processed)
+        local inputConn = UserInputService.InputBegan:Connect(function(input, processed)
             if listening then
                 if input.UserInputType == Enum.UserInputType.Keyboard then
+                    -- Escape cancels rebind without changing the key
+                    if input.KeyCode == Enum.KeyCode.Escape then
+                        listening = false
+                        updateText()
+                        return
+                    end
                     current = input.KeyCode
                     listening = false
                     updateText()
@@ -1399,6 +1482,12 @@ Riceberry.CreateWindow = function(self, Config)
 
             if current and input.KeyCode == current then
                 RB_SafeCallback(Config.Callback, current)
+            end
+        end)
+
+        button.Destroying:Connect(function()
+            if inputConn then
+                inputConn:Disconnect()
             end
         end)
 
@@ -1571,16 +1660,50 @@ Riceberry.CreateWindow = function(self, Config)
     function Window:CreateTabs()
         local tabs = {}
         local api = {}
+        local selectedTab = nil
 
         local bar = New("Frame", {
             Size = UDim2.new(1, 0, 0, 40),
             BackgroundTransparency = 1
         }, self.Content)
 
-        local layout = New("UIListLayout", {
+        New("UIListLayout", {
             FillDirection = Enum.FillDirection.Horizontal,
             Padding = UDim.new(0, 6)
         }, bar)
+
+        local function selectTab(tab)
+            if not tab then
+                return
+            end
+
+            for _, item in ipairs(tabs) do
+                item.Visible = false
+                if item.Container then
+                    item.Container.Visible = false
+                end
+                if item.Button then
+                    Tween(item.Button, {
+                        BackgroundColor3 = RB_Defaults.Element,
+                        TextColor3 = RB_Defaults.Muted
+                    }, 0.12)
+                end
+            end
+
+            tab.Visible = true
+            selectedTab = tab
+
+            if tab.Container then
+                tab.Container.Visible = true
+            end
+
+            if tab.Button then
+                Tween(tab.Button, {
+                    BackgroundColor3 = Accent,
+                    TextColor3 = Color3.fromRGB(255, 255, 255)
+                }, 0.15)
+            end
+        end
 
         function api:AddTab(name)
             local tab = {
@@ -1602,35 +1725,24 @@ Riceberry.CreateWindow = function(self, Config)
             Corner(button, 8)
 
             button.MouseButton1Click:Connect(function()
-                for _, item in ipairs(tabs) do
-                    item.Visible = false
-                    if item.Container then
-                        item.Container.Visible = false
-                    end
-                end
-
-                tab.Visible = true
-
-                if tab.Container then
-                    tab.Container.Visible = true
-                end
-
-                Tween(button, {
-                    BackgroundColor3 = Accent,
-                    TextColor3 = Color3.fromRGB(255, 255, 255)
-                }, 0.15)
+                selectTab(tab)
             end)
 
             tab.Button = button
             table.insert(tabs, tab)
+
+            -- Auto-select the first tab
+            if #tabs == 1 then
+                selectTab(tab)
+            end
 
             return tab
         end
 
         function api:Select(name)
             for _, tab in ipairs(tabs) do
-                if tab.Name == name and tab.Button then
-                    tab.Button:Activate()
+                if tab.Name == name then
+                    selectTab(tab)
                     return
                 end
             end
@@ -1641,7 +1753,8 @@ Riceberry.CreateWindow = function(self, Config)
     end
 
     function Window:CreateToast(message)
-        return Riceberry:Notify(Config.Name or "Riceberry", message, 2.5)
+        local winName = (Config and Config.Name) or "Riceberry"
+        return Riceberry:Notify(winName, message, 2.5)
     end
 
     function Window:ApplyTheme(theme)
