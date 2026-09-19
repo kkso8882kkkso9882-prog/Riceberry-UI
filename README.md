@@ -1,12 +1,11 @@
-# 🍓 Riceberry UI Library — คู่มือการใช้งาน 
+# 🍓 Riceberry UI Library — คู่มือการใช้งาน
 
 Riceberry UI เป็น UI Library สำหรับ Roblox Lua/Luau  
 รองรับ Window, Button, Toggle, Textbox, Label, Section, Paragraph,  
 Dropdown, Slider, Keybind, Divider, Spacer, IconButton, Status,  
 Progress, Tabs, Notification, Theme และ Animation
 
-> **หมายเหตุสำคัญ:** คู่มือนี้ตรวจสอบจาก `LibraryUI.lua` โดยตรงแล้ว  
-> บางส่วนของ Extended API ยังมี bug อยู่ (ดูส่วนท้าย)
+> คู่มือนี้ตรงกับเวอร์ชันที่แก้ bug แล้ว (Window.Content, Slider, Dropdown:Refresh, Tabs:Select, CreateToast)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -17,6 +16,8 @@ local Riceberry = loadstring(game:HttpGet(
     "https://raw.githubusercontent.com/kkso8882kkkso9882-prog/Riceberry-UI/refs/heads/main/LibraryUI.lua"
 ))()
 ```
+
+หรือใช้ไฟล์ที่แก้ bug แล้วจาก local / artifact ของคุณ
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -33,6 +34,7 @@ local Window = Riceberry:CreateWindow({
 
 - มีปุ่ม Minimize / Maximize / Close ในตัว
 - Close จะมี Confirmation Dialog ก่อนปิด
+- `Window.Content`, `Window.Main`, `Window.Gui` ถูกแนบให้อัตโนมัติ (ใช้กับ Extended API ได้)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -135,19 +137,20 @@ local Dropdown = Window:CreateDropdown({
 Dropdown:Set("Mode 2")
 print(Dropdown:Get())
 
+-- Refresh สร้างปุ่ม Option ใหม่จริง (rebuild)
 Dropdown:Refresh({
     "Mode 1",
     "Mode 2"
 })
 ```
 
-**หมายเหตุจาก Source:**  
-`Refresh` เปลี่ยนแค่ตาราง `values` ภายใน **ไม่ได้สร้างปุ่ม Option ใหม่**  
-ดังนั้นรายการที่แสดงจะยังเป็นของเดิม
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🎚️ CreateSlider
+
+- มี hit area กว้างขึ้น กดง่าย (เมาส์ + ทัช)
+- ตอนลากอัปเดตทันที ไม่กระตุก
+- รองรับ `Rounding` สำหรับทศนิยม
 
 ```lua
 local Slider = Window:CreateSlider({
@@ -169,7 +172,8 @@ print(Slider:Get())
 
 ## ⌨️ CreateKeybind
 
-รองรับ Keyboard KeyCode
+รองรับ Keyboard KeyCode  
+กด **Escape** ระหว่าง rebind = ยกเลิกโดยไม่เปลี่ยนคีย์
 
 ```lua
 local Keybind = Window:CreateKeybind({
@@ -240,7 +244,7 @@ Status:Set("Running", Color3.fromRGB(255, 200, 0))
 
 ## 📊 CreateProgress
 
-ค่าอยู่ระหว่าง **0-100** เท่านั้น ใช้ `Default`
+ค่าอยู่ระหว่าง **0–100** เท่านั้น ใช้ `Default`
 
 ```lua
 local Progress = Window:CreateProgress({
@@ -298,7 +302,7 @@ Riceberry:CreateTheme("MyTheme", {
 Riceberry:ApplyTheme("MyTheme")
 ```
 
-**หมายเหตุ:** `ApplyTheme` ตอนนี้เปลี่ยนแค่ Accent เป็นหลัก (ยังไม่เปลี่ยนสี Background / Element ทั้งหมดของ Window)
+**หมายเหตุ:** `ApplyTheme` ตอนนี้เปลี่ยน Accent เป็นหลัก (ยังไม่เปลี่ยนสี Background / Element ของทุก element ใน Window)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -357,10 +361,22 @@ local Tab2 = Tabs:AddTab("Settings")
 Tabs:Select("Main")
 ```
 
-**ข้อจำกัดจาก Source:**
-- สร้างปุ่ม Tab ได้
-- มีการรองรับ `tab.Container` ใน logic แต่ **ไม่มี API ให้สร้าง Content Container** ของแต่ละ Tab
-- `Tabs:Select()` เรียก `button:Activate()` ซึ่ง TextButton ไม่มีเมธอดนี้ → อาจ error
+**พฤติกรรมปัจจุบัน:**
+- แท็บแรกถูกเลือกอัตโนมัติ
+- สลับแท็บแล้วรีเซ็ตสีปุ่มก่อนหน้าถูกต้อง
+- `Tabs:Select(name)` ทำงานได้ (ไม่เรียก `:Activate()` อีกแล้ว)
+- รองรับ `tab.Container` ใน logic แต่ **ยังไม่มี API สร้าง Content Container ต่อแท็บ**  
+  (ถ้าต้องการ content แยกแท็บ ต้องสร้าง Frame เองแล้วใส่ใน `tab.Container`)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 🍞 CreateToast
+
+```lua
+Window:CreateToast("ข้อความสั้น ๆ")
+```
+
+ใช้ชื่อหน้าต่างเป็น Title ของ notification
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -410,42 +426,24 @@ Window:Spacer(10)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## ⚠️ Bug / ข้อจำกัดที่พบจาก Source Code
+## ✅ สถานะหลังแก้ Bug
 
-1. **Window.Content ไม่ถูกเซ็ต**  
-   ใน `CreateWindow` ตัวแปร `Content` เป็น local แล้ว `return Window`  
-   โดยไม่ได้ทำ `Window.Content = Content`  
-   → เมธอด Extended ส่วนใหญ่ (`CreateSection`, `CreateParagraph`, `CreateDropdown`, `CreateSlider`, `CreateKeybind`, `CreateDivider`, `CreateSpacer`, `CreateIconButton`, `CreateStatus`, `CreateProgress`, `CreateTabs`) ใช้ `self.Content`  
-   → **จะ error เพราะ parent เป็น nil**  
-   ต้องแก้ใน source โดยเพิ่มก่อน `return Window`:
-   ```lua
-   Window.Content = Content
-   ```
-
-2. **CreateDropdown:Refresh()**  
-   เปลี่ยนแค่ตาราง values ภายใน ไม่ได้สร้างปุ่ม Option ใหม่
-
-3. **CreateToast()** มี Bug  
-   ```lua
-   function Window:CreateToast(message)
-       return Riceberry:Notify(Config.Name or "Riceberry", message, 2.5)
-   end
-   ```
-   ใช้ `Config` ที่ไม่มีอยู่ใน scope → จะ error
-
-4. **CreateTabs**  
-   - ไม่มี API สร้าง Content ของแต่ละ Tab  
-   - `Select()` เรียก `:Activate()` ซึ่งไม่มีใน TextButton
-
-5. **ApplyTheme**  
-   เปลี่ยน Accent ได้ แต่ยังไม่เปลี่ยนสีพื้นหลัง / Element ของ Window ทั้งหมด
-
-6. **CreateIconButton**  
-   ไม่มี Tooltip
+| รายการ | สถานะ |
+|--------|--------|
+| `Window.Content` ไม่ถูกเซ็ต | ✅ แก้แล้ว (`Content`, `Main`, `Gui`) |
+| Slider ลากกระตุก / ยาก | ✅ แก้แล้ว (hit area + อัปเดตทันที) |
+| `Dropdown:Refresh()` ไม่สร้างปุ่มใหม่ | ✅ แก้แล้ว (rebuild) |
+| `CreateToast` อ้าง `Config` นอก scope | ✅ แก้แล้ว |
+| `Tabs:Select()` เรียก `:Activate()` | ✅ แก้แล้ว |
+| สีปุ่ม Tab ค้าง | ✅ แก้แล้ว |
+| Keybind กด Escape ยกเลิก rebind | ✅ เพิ่มแล้ว |
+| `ApplyTheme` เปลี่ยนแค่ Accent | ⚠️ ยังจำกัด (ตั้งใจไว้) |
+| Tabs ไม่มี API สร้าง Container ต่อแท็บ | ⚠️ ยังไม่มี (ต้องสร้างเอง) |
+| IconButton ไม่มี Tooltip | ⚠️ ยังไม่มี |
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## 🍓 ตัวอย่างรวม (ใช้ได้จริงเฉพาะส่วน Core)
+## 🍓 ตัวอย่างรวม (ใช้ได้จริง)
 
 ```lua
 local Riceberry = loadstring(game:HttpGet(
@@ -457,7 +455,8 @@ local Window = Riceberry:CreateWindow({
     Ability = "Riceberry UI"
 })
 
--- ส่วน Core เหล่านี้ทำงานได้ทันที
+Window:CreateSection("Main")
+
 Window:CreateButton({
     Name = "กดฉัน",
     Callback = function()
@@ -473,6 +472,25 @@ Window:CreateToggle({
     end
 })
 
+local Slider = Window:CreateSlider({
+    Name = "Speed",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Callback = function(v)
+        print("Speed:", v)
+    end
+})
+
+local Dropdown = Window:CreateDropdown({
+    Name = "Mode",
+    Options = {"A", "B", "C"},
+    Default = "A",
+    Callback = function(v)
+        print("Mode:", v)
+    end
+})
+
 Window:CreateLabel("Riceberry UI")
 
 Window:CreateTextbox({
@@ -484,9 +502,6 @@ Window:CreateTextbox({
 
 Riceberry:Notify("Riceberry", "UI Loaded!", 3)
 ```
-
-> **คำแนะนำ:** ถ้าต้องการใช้ Extended components (Section, Slider, Dropdown ฯลฯ)  
-> ต้องแก้ `Window.Content = Content` ใน source ก่อน ไม่งั้นจะ error
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
