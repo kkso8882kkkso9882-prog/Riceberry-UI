@@ -1,64 +1,76 @@
-# 🍓 Riceberry UI Library — คู่มือการใช้งาน
+# 🍓 Riceberry UI Library — คู่มือการใช้งาน 
 
-Riceberry UI เป็น UI Library สำหรับ Roblox Lua/Luau
-รองรับ Window, Button, Toggle, Textbox, Label, Section, Paragraph,
-Dropdown, Slider, Keybind, Divider, Spacer, IconButton, Status,
+Riceberry UI เป็น UI Library สำหรับ Roblox Lua/Luau  
+รองรับ Window, Button, Toggle, Textbox, Label, Section, Paragraph,  
+Dropdown, Slider, Keybind, Divider, Spacer, IconButton, Status,  
 Progress, Tabs, Notification, Theme และ Animation
+
+> **หมายเหตุสำคัญ:** คู่มือนี้ตรวจสอบจาก `LibraryUI.lua` โดยตรงแล้ว  
+> บางส่วนของ Extended API ยังมี bug อยู่ (ดูส่วนท้าย)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📥 โหลด Library
 
+```lua
 local Riceberry = loadstring(game:HttpGet(
     "https://raw.githubusercontent.com/kkso8882kkkso9882-prog/Riceberry-UI/refs/heads/main/LibraryUI.lua"
 ))()
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🪟 CreateWindow
 
-API จริงใช้ Name และ Ability
+ใช้ **Name** และ **Ability** เท่านั้น (ไม่มี Title / Subtitle)
 
+```lua
 local Window = Riceberry:CreateWindow({
     Name = "My Window",
     Ability = "My Script"
 })
+```
+
+- มีปุ่ม Minimize / Maximize / Close ในตัว
+- Close จะมี Confirmation Dialog ก่อนปิด
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🔘 CreateButton
 
+```lua
 Window:CreateButton({
     Name = "กดฉัน",
     Callback = function()
         print("Button Clicked!")
     end
 })
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🔄 CreateToggle
 
-Default เป็น true/false
-Callback จะได้รับค่า Boolean
-
+```lua
 local Toggle = Window:CreateToggle({
     Name = "เปิดใช้งาน",
-    Default = false,
+    Default = false,          -- true / false
     Callback = function(Value)
-        print(Value)
+        print(Value)          -- ได้ Boolean
     end
 })
 
 Toggle:Set(true)
-print(Toggle:Get())
+print(Toggle:Get())           -- true / false
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📝 CreateTextbox
 
-Callback ทำงานเมื่อช่องเสีย Focus
+Callback ทำงานเมื่อ **FocusLost** (เสียโฟกัส)
 
+```lua
 local Box = Window:CreateTextbox({
     Default = "",
     Placeholder = "พิมพ์ข้อความ...",
@@ -66,42 +78,50 @@ local Box = Window:CreateTextbox({
         print(Text)
     end
 })
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🏷️ CreateLabel
 
-รับ String โดยตรง ไม่ใช่ Table
+รับ **String โดยตรง** (ไม่ใช่ Table)
 
+```lua
 Window:CreateLabel("ข้อความของฉัน")
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📌 CreateSection
 
+```lua
 Window:CreateSection("Main")
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📄 CreateParagraph
 
-ใช้ Content ไม่ใช่ Text
+ใช้ **Title**, **Content**, **Height**
 
+```lua
 Window:CreateParagraph({
     Title = "ข้อมูล",
     Content = "รายละเอียดของสคริปต์",
-    Height = 68
+    Height = 68                 -- optional (default 68)
 })
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📋 CreateDropdown
 
-รองรับ Options หรือ Values
+รองรับทั้ง `Options` และ `Values`
 
+```lua
 local Dropdown = Window:CreateDropdown({
     Name = "เลือกโหมด",
-    Options = {
+    Options = {                 -- หรือใช้ Values ก็ได้
         "Mode 1",
         "Mode 2",
         "Mode 3"
@@ -119,20 +139,23 @@ Dropdown:Refresh({
     "Mode 1",
     "Mode 2"
 })
+```
 
-หมายเหตุ:
-Refresh เปลี่ยนรายการภายใน แต่โค้ดปัจจุบันไม่ได้สร้างปุ่ม Option ใหม่
+**หมายเหตุจาก Source:**  
+`Refresh` เปลี่ยนแค่ตาราง `values` ภายใน **ไม่ได้สร้างปุ่ม Option ใหม่**  
+ดังนั้นรายการที่แสดงจะยังเป็นของเดิม
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🎚️ CreateSlider
 
+```lua
 local Slider = Window:CreateSlider({
     Name = "ความแรง",
     Min = 1,
     Max = 100,
     Default = 50,
-    Rounding = 0,
+    Rounding = 0,               -- จำนวนทศนิยม (0 = จำนวนเต็ม)
     Callback = function(Value)
         print(Value)
     end
@@ -140,6 +163,7 @@ local Slider = Window:CreateSlider({
 
 Slider:Set(75)
 print(Slider:Get())
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -147,75 +171,78 @@ print(Slider:Get())
 
 รองรับ Keyboard KeyCode
 
+```lua
 local Keybind = Window:CreateKeybind({
     Name = "เปิด/ปิด",
     Default = Enum.KeyCode.RightShift,
-
     Callback = function(Key)
         print("Key pressed:", Key.Name)
     end,
-
     Changed = function(Key)
         print("Changed:", Key.Name)
     end
 })
 
 Keybind:Set(Enum.KeyCode.F)
-print(Keybind:Get())
+print(Keybind:Get())            -- ได้ Enum.KeyCode
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## ➖ CreateDivider
 
+```lua
 Window:CreateDivider()
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## ↕️ CreateSpacer
 
-Window:CreateSpacer(10)
+```lua
+Window:CreateSpacer(10)         -- ความสูง (default 8)
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🔳 CreateIconButton
 
-API จริงรองรับ Size, Background, Icon, Color, TextSize และ Callback
+รองรับ Size, Background, Icon, Color, TextSize, Callback  
+**ไม่มี Tooltip**
 
+```lua
 Window:CreateIconButton({
     Size = 42,
     Background = Color3.fromRGB(38, 38, 45),
     Icon = "⚙",
     Color = Color3.fromRGB(180, 50, 100),
     TextSize = 17,
-
     Callback = function()
         print("Icon clicked")
     end
 })
-
-หมายเหตุ:
-ไม่มี Tooltip ใน API ปัจจุบัน
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🟢 CreateStatus
 
+```lua
 local Status = Window:CreateStatus({
     Text = "Connected",
     Color = Color3.fromRGB(0, 255, 0)
 })
 
-Status:Set(
-    "Running",
-    Color3.fromRGB(255, 200, 0)
-)
+Status:Set("Running", Color3.fromRGB(255, 200, 0))
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📊 CreateProgress
 
-ใช้ Default และค่าจะอยู่ระหว่าง 0-100
+ค่าอยู่ระหว่าง **0-100** เท่านั้น ใช้ `Default`
 
+```lua
 local Progress = Window:CreateProgress({
     Name = "Progress",
     Default = 50
@@ -223,138 +250,133 @@ local Progress = Window:CreateProgress({
 
 Progress:Set(80)
 print(Progress:Get())
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## 🔔 CreateNotification
+## 🔔 CreateNotification / Notify
 
-ใช้ Message ไม่ใช่ Text
+ใช้ **Message** (ไม่ใช่ Text)
 
+```lua
 Riceberry:CreateNotification({
     Title = "แจ้งเตือน",
     Message = "ทำงานเรียบร้อยแล้ว!",
-    Duration = 3
+    Duration = 3,               -- วินาที
+    Color = Color3.fromRGB(180, 50, 100)  -- optional
 })
 
-หรือ
-
-Riceberry:Notify(
-    "Riceberry",
-    "ทำงานเรียบร้อยแล้ว!",
-    3
-)
+-- หรือแบบสั้น
+Riceberry:Notify("Riceberry", "ทำงานเรียบร้อยแล้ว!", 3)
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🎨 SetAccent / GetAccent
 
-Riceberry:SetAccent(
-    Color3.fromRGB(180, 50, 100)
-)
-
+```lua
+Riceberry:SetAccent(Color3.fromRGB(180, 50, 100))
 local Accent = Riceberry:GetAccent()
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🎨 CreateTheme
 
-CreateTheme ต้องใช้ 2 Arguments:
-ชื่อ Theme และ Table
+ต้องส่ง **2 Arguments**: ชื่อ Theme + Table
 
-local Theme = Riceberry:CreateTheme("MyTheme", {
+```lua
+Riceberry:CreateTheme("MyTheme", {
     Background = Color3.fromRGB(20, 20, 20),
-    Surface = Color3.fromRGB(30, 30, 30),
-    Element = Color3.fromRGB(38, 38, 45),
-    Accent = Color3.fromRGB(180, 50, 100),
-    Text = Color3.fromRGB(240, 240, 245),
-    Muted = Color3.fromRGB(155, 155, 165)
+    Surface    = Color3.fromRGB(30, 30, 30),
+    Element    = Color3.fromRGB(38, 38, 45),
+    Accent     = Color3.fromRGB(180, 50, 100),
+    Text       = Color3.fromRGB(240, 240, 245),
+    Muted      = Color3.fromRGB(155, 155, 165)
 })
 
 Riceberry:ApplyTheme("MyTheme")
+```
+
+**หมายเหตุ:** `ApplyTheme` ตอนนี้เปลี่ยนแค่ Accent เป็นหลัก (ยังไม่เปลี่ยนสี Background / Element ทั้งหมดของ Window)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🎨 CreateSimpleTheme
 
-ไม่รับ Color เป็น Argument
+**ไม่รับ Argument**
 
-Riceberry:CreateSimpleTheme()
-
-จากนั้น Theme ชื่อ "Riceberry" จะถูกสร้างขึ้น
-
+```lua
+Riceberry:CreateSimpleTheme()   -- สร้าง Theme ชื่อ "Riceberry" อัตโนมัติ
 Riceberry:ApplyTheme("Riceberry")
+```
+
+(เรียกให้อัตโนมัติตอนโหลด Library แล้ว)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## ✨ Animate
 
-Riceberry:Animate(
-    Instance,
-    {
-        BackgroundTransparency = 0
-    },
-    0.3
-)
+```lua
+Riceberry:Animate(Instance, {
+    BackgroundTransparency = 0
+}, 0.3)
 
-สามารถกำหนด Style และ Direction เพิ่มได้
-
-Riceberry:Animate(
-    Instance,
-    {
-        Size = UDim2.fromOffset(300, 200)
-    },
-    0.3,
-    Enum.EasingStyle.Quad,
-    Enum.EasingDirection.Out
-)
+-- ระบุ Style + Direction ได้
+Riceberry:Animate(Instance, {
+    Size = UDim2.fromOffset(300, 200)
+}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 💥 Pulse
 
-Riceberry:Pulse(
-    Instance,
-    1.04,
-    0.18
-)
+```lua
+Riceberry:Pulse(Instance, 1.04, 0.18)   -- scale, duration
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 📳 Shake
 
-Riceberry:Shake(
-    Instance,
-    5,
-    0.25
-)
+```lua
+Riceberry:Shake(Instance, 5, 0.25)      -- intensity, duration
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🗂️ CreateTabs
 
+```lua
 local Tabs = Window:CreateTabs()
 
 local Tab1 = Tabs:AddTab("Main")
 local Tab2 = Tabs:AddTab("Settings")
 
 Tabs:Select("Main")
+```
 
-หมายเหตุ:
-API ปัจจุบันสร้างปุ่ม Tab ได้ แต่ยังไม่มี API สำหรับสร้าง Content Container
-แยกของแต่ละ Tab
+**ข้อจำกัดจาก Source:**
+- สร้างปุ่ม Tab ได้
+- มีการรองรับ `tab.Container` ใน logic แต่ **ไม่มี API ให้สร้าง Content Container** ของแต่ละ Tab
+- `Tabs:Select()` เรียก `button:Activate()` ซึ่ง TextButton ไม่มีเมธอดนี้ → อาจ error
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 🧹 Destroy
 
+```lua
 Window:Destroy()
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# ⚡ Short Aliases
+## ⚡ Short Aliases
 
-สามารถใช้ชื่อสั้นแทน Create... ได้
+สามารถใช้ชื่อสั้นแทนได้ (ถูกแนบให้ Window อัตโนมัติ)
 
+```lua
 Window:Button("กด", function()
     print("Clicked")
 end)
@@ -368,99 +390,64 @@ Window:Textbox("พิมพ์ข้อความ...", function(Text)
 end)
 
 Window:Label("ข้อความ")
-
 Window:Section("Main")
 
-Window:Dropdown(
-    "Mode",
-    {"A", "B", "C"},
-    function(Value)
-        print(Value)
-    end
-)
+Window:Dropdown("Mode", {"A", "B", "C"}, function(Value)
+    print(Value)
+end)
 
-Window:Slider(
-    "Power",
-    1,
-    100,
-    50,
-    function(Value)
-        print(Value)
-    end
-)
+Window:Slider("Power", 1, 100, 50, function(Value)
+    print(Value)
+end)
 
-Window:Keybind(
-    "Toggle",
-    Enum.KeyCode.RightShift,
-    function(Key)
-        print(Key.Name)
-    end
-)
+Window:Keybind("Toggle", Enum.KeyCode.RightShift, function(Key)
+    print(Key.Name)
+end)
 
 Window:Divider()
 Window:Spacer(10)
+```
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# ⚠️ หมายเหตุจาก Source Code
+## ⚠️ Bug / ข้อจำกัดที่พบจาก Source Code
 
-1. CreateWindow ใช้:
-   Name
-   Ability
+1. **Window.Content ไม่ถูกเซ็ต**  
+   ใน `CreateWindow` ตัวแปร `Content` เป็น local แล้ว `return Window`  
+   โดยไม่ได้ทำ `Window.Content = Content`  
+   → เมธอด Extended ส่วนใหญ่ (`CreateSection`, `CreateParagraph`, `CreateDropdown`, `CreateSlider`, `CreateKeybind`, `CreateDivider`, `CreateSpacer`, `CreateIconButton`, `CreateStatus`, `CreateProgress`, `CreateTabs`) ใช้ `self.Content`  
+   → **จะ error เพราะ parent เป็น nil**  
+   ต้องแก้ใน source โดยเพิ่มก่อน `return Window`:
+   ```lua
+   Window.Content = Content
+   ```
 
-   ไม่ใช่:
-   Title
-   Subtitle
+2. **CreateDropdown:Refresh()**  
+   เปลี่ยนแค่ตาราง values ภายใน ไม่ได้สร้างปุ่ม Option ใหม่
 
-2. CreateLabel รับ String โดยตรง:
-   Window:CreateLabel("ข้อความ")
+3. **CreateToast()** มี Bug  
+   ```lua
+   function Window:CreateToast(message)
+       return Riceberry:Notify(Config.Name or "Riceberry", message, 2.5)
+   end
+   ```
+   ใช้ `Config` ที่ไม่มีอยู่ใน scope → จะ error
 
-3. CreateParagraph ใช้:
-   Title
-   Content
-   Height
+4. **CreateTabs**  
+   - ไม่มี API สร้าง Content ของแต่ละ Tab  
+   - `Select()` เรียก `:Activate()` ซึ่งไม่มีใน TextButton
 
-4. CreateNotification ใช้:
-   Title
-   Message
-   Duration
-   Color
+5. **ApplyTheme**  
+   เปลี่ยน Accent ได้ แต่ยังไม่เปลี่ยนสีพื้นหลัง / Element ของ Window ทั้งหมด
 
-5. CreateTheme ใช้:
-   Riceberry:CreateTheme("ชื่อ", Theme)
-
-6. CreateSimpleTheme ไม่รับ Color Argument
-
-7. CreateProgress ใช้ Default และช่วง 0-100
-   ไม่มี Value/Max ตามที่คู่มือเก่าเคยเขียน
-
-8. CreateIconButton ไม่มี Tooltip
-
-9. CreateDropdown:Refresh() ใน Source ปัจจุบัน
-   เปลี่ยนตาราง values แต่ไม่ได้สร้าง Option Button ใหม่
-
-10. CreateToast() ใน Source ปัจจุบันมี Bug:
-    อ้างถึง Config.Name แต่ Config ไม่มีอยู่ใน Function
-
-11. สำคัญ:
-    Window.Content ไม่ได้ถูกกำหนดใน CreateWindow
-    แต่ Extended API หลายตัวใช้ self.Content
-
-    ดังนั้น CreateSection, CreateParagraph, CreateDropdown,
-    CreateSlider, CreateKeybind, CreateDivider, CreateSpacer,
-    CreateIconButton, CreateStatus, CreateProgress และ CreateTabs
-    อาจทำงานผิดพลาดจนกว่าจะเพิ่ม:
-
-    Window.Content = Content
-
-    ก่อน:
-
-    return Window
+6. **CreateIconButton**  
+   ไม่มี Tooltip
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# 🍓 ตัวอย่างรวม
+## 🍓 ตัวอย่างรวม (ใช้ได้จริงเฉพาะส่วน Core)
 
+```lua
 local Riceberry = loadstring(game:HttpGet(
     "https://raw.githubusercontent.com/kkso8882kkkso9882-prog/Riceberry-UI/refs/heads/main/LibraryUI.lua"
 ))()
@@ -470,8 +457,7 @@ local Window = Riceberry:CreateWindow({
     Ability = "Riceberry UI"
 })
 
-Window:CreateSection("Main")
-
+-- ส่วน Core เหล่านี้ทำงานได้ทันที
 Window:CreateButton({
     Name = "กดฉัน",
     Callback = function()
@@ -489,17 +475,18 @@ Window:CreateToggle({
 
 Window:CreateLabel("Riceberry UI")
 
-Window:CreateParagraph({
-    Title = "Information",
-    Content = "Riceberry UI Library",
-    Height = 68
+Window:CreateTextbox({
+    Placeholder = "พิมพ์อะไรสักอย่าง...",
+    Callback = function(Text)
+        print(Text)
+    end
 })
 
-Riceberry:Notify(
-    "Riceberry",
-    "UI Loaded!",
-    3
-)
+Riceberry:Notify("Riceberry", "UI Loaded!", 3)
+```
+
+> **คำแนะนำ:** ถ้าต้องการใช้ Extended components (Section, Slider, Dropdown ฯลฯ)  
+> ต้องแก้ `Window.Content = Content` ใน source ก่อน ไม่งั้นจะ error
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
